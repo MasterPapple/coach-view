@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Coach">
 <meta name="theme-color" content="#0A0A0B">
 <meta name="format-detection" content="telephone=no">
-<title>Coach 0.1.4 — ukážkové dáta</title>
+<title>Coach 0.1.5 — ukážkové dáta</title>
 <style>
 :root{
   --bg:#0A0A0B; --surface:#141416; --surface-2:#1E1E21; --line:#2A2A2E;
@@ -292,6 +292,9 @@ select.inp{background-image:none}
 .sshd{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text);
   padding:2px 6px 8px;display:flex;align-items:center;gap:8px}
 .sshd .nmx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 0.1.5 — hlavička supersérie je potiahnuteľná, preto musí mať plnú výšku dotyku */
+.sshdsw{border-radius:9px;margin-bottom:2px}
+.sshdsw .sshd{min-height:44px;padding:2px 6px;background:var(--surface)}
 .ssgrp .row:first-of-type::before{display:none}
 .ssgrp .exc{margin-bottom:8px}
 
@@ -385,6 +388,17 @@ select.inp{background-image:none}
   background:rgba(255,255,255,.03);border:1px dashed var(--line)}
 .warmlbl{color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.08em;
   text-transform:uppercase;margin-bottom:8px}
+/* 0.1.5 — rozbaľovacia hlavička bloku rozcvičenia */
+.warmtog{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;text-align:left}
+.warmtog .warmlbl{flex:1;margin:0}
+.warmtog .chev{color:var(--muted);display:flex;flex:none}
+.warmblk .warmhd{margin-top:8px}
+
+/* ---------- 0.1.5: výber položky v rozcvičke ---------- */
+.pick{width:26px;height:26px;border-radius:13px;border:1.5px solid var(--line);flex:none;
+  display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.pick.on{background:var(--accent);color:#0A0A0B;border-color:var(--accent);box-shadow:var(--glow)}
+.pick svg{width:18px;height:18px}
 
 /* ---------- 0.1.4: databáza cvikov — kategória raz, pod ňou podskupiny ---------- */
 .dbcat{font-size:20px;font-weight:700;letter-spacing:-.02em;padding:0 var(--pad);margin:24px 0 0}
@@ -470,10 +484,10 @@ select.inp{background-image:none}
    Celý skript beží v IIFE — na globálnej úrovni by sa názvy ako
    `top` zrazili s vlastnosťami window a stránka by ostala čierna.
    ============================================================ */
-/* Verzia 0.1.4 — ukážkové dáta.
+/* Verzia 0.1.5 — ukážkové dáta.
    Prázdna a predplnená verzia sú od 0.1.2 dva samostatné súbory. */
 const MODE = 'demo';
-const SKEY = 'coach.v014.demo';
+const SKEY = 'coach.v015.demo';
 
 /* ---------- utils ---------- */
 const $ = (s, r) => (r || document).querySelector(s);
@@ -575,7 +589,9 @@ const I = {
   /* jednorazová výmena cviku — rovné šípky s bodkou, odlíšené od kolieska v pláne */
   swap1: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13M13.5 5.5 17 9l-3.5 3.5"/><path d="M20 15H7M10.5 11.5 7 15l3.5 3.5"/><circle cx="20.4" cy="9" r="1.3" fill="currentColor" stroke="none"/></svg>',
   /* jednorazová zmena tréningového dňa — kalendár so šípkami */
-  swapDay: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15h7M13 13l2 2-2 2"/></svg>'
+  swapDay: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15h7M13 13l2 2-2 2"/></svg>',
+  /* 0.1.5 — rozcvička */
+  flame: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7c2.6 3 3.7 5.2 3.3 7 2-.6 2.6-2.3 2.6-2.3 1.4 2 2.1 4 2.1 5.9a8 8 0 1 1-16 0c0-3.2 1.7-5.6 3.6-7.4 0 2 .8 3.1 1.8 3.5.6-3 1.5-5 2.6-6.7Z"/></svg>'
 };
 /* ============================================================
    Zásobník cvikov (~43). [názov, partia, náradie, základná váha]
@@ -588,85 +604,110 @@ const VARIANTS = ['bilaterálne','unilaterálne'];
 const LIB_RAW = [
   ["Drep s TRX", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 0],
   ["Drep s vlastnou váhou", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 0],
-  ["Goblet drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 40],
-  ["Safetybar drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 100],
+  ["Goblet squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 40],
+  ["Safetybar squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 100],
   ["Zadný drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 100],
   ["Čelný drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 75],
-  ["Zercher drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 100],
-  ["Overhead drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 40],
+  ["Zercher squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 100],
+  ["Overhead squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 40],
   ["Predkopávanie", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 40],
-  ["Reverse Nordic curls", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 0],
-  ["Sissy drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 0],
+  ["Reverse Nordic curl", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 0],
+  ["Sissy squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 0],
   ["Wall sit", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 0],
+  ["Box squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 100],
+  ["Hack squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 80],
+  ["Leg press", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "bilaterálne", 140],
   ["Výpady na mieste", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
   ["Výpady v chôdzi", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
-  ["Step up ( výstup )", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
-  ["Step down ( zostup )", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
-  ["RFESS ( bulharský drep )", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 60],
-  ["FFESS ( výpad s prednou vypodloženou nohou )", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
+  ["Výstup", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
+  ["Zostup", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
+  ["Bulharský drep", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 60],
+  ["Výpad s vyvýšenou prednou nohou", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
   ["Bočný výpad", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
-  ["Zadný výpad", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
+  ["Výpad vzad", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
   ["Cursty lunge", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
   ["Skater squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 0],
   ["Shrimp squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 0],
   ["Pistol squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 0],
-  ["Predkopávanie", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 40],
+  ["Predkopávanie UL", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 40],
+  ["Výpad vpred", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 20],
+  ["Cossack squat", "Hlavné cvičenia", "Kolenný ohyb — quadriceps", "unilaterálne", 0],
   ["Zakopávanie v sede", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 40],
   ["Zakopávanie v ľahu", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 40],
   ["Core trainer", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 20],
-  ["Swiss ball", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
-  ["TRX hamstring", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
-  ["Slider hamstring", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
-  ["Nordic curls", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
-  ["Zakopávanie v sede", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 40],
-  ["Zakopávanie v ľahu", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 40],
-  ["Core trainer", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 20],
-  ["Swiss ball", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 0],
-  ["TRX hamstring", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 0],
-  ["Slider hamstring", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 0],
-  ["Bedrový ohyb s MDCBL", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 20],
-  ["Mrtvý ťah s KB", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 90],
-  ["Hexabar", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 20],
-  ["Trapbar", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 20],
+  ["Swiss ball hamstring curl", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
+  ["TRX hamstring curl", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
+  ["Slider hamstring curl", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
+  ["Nordic hamstring curl", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "bilaterálne", 0],
+  ["Zakopávanie v sede UL", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 40],
+  ["Zakopávanie v ľahu UL", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 40],
+  ["Core trainer UL", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 20],
+  ["Swiss ball hamstring curl UL", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 0],
+  ["TRX hamstring curl UL", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 0],
+  ["Slider hamstring curl UL", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 0],
+  ["Zakopávanie v stoji", "Hlavné cvičenia", "Kolenný ohyb — hamstring", "unilaterálne", 20],
+  ["Mrtvý ťah", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 90],
+  ["Hexabar deadlift", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 20],
+  ["Trap bar deadlift", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 20],
   ["Konvenčný mŕtvy ťah", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 130],
   ["Sumo mŕtvy ťah", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 130],
   ["Rumúnsky mrtvý ťah", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 90],
   ["Good morning", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 50],
-  ["Jednonožný bedrový ohyb so sliderom", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 0],
-  ["Rumúnsky mrtvý ťah b - stance", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 90],
+  ["Stiff-leg deadlift", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 90],
+  ["Hip thrust", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 100],
+  ["Glute bridge", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 0],
+  ["Kettlebell swing", "Hlavné cvičenia", "Bedrový ohyb", "bilaterálne", 24],
+  ["Skater deadlift", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 0],
+  ["B-stance RDL", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 90],
   ["Lastovička", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 0],
+  ["Hip thrust UL", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 40],
+  ["Glute bridge UL", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 0],
+  ["B-stance hip thrust", "Hlavné cvičenia", "Bedrový ohyb", "unilaterálne", 60],
   ["Floorpress", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 55],
-  ["Tlak s KB", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 26],
   ["Incline kľuky ( ruky sú na vyvýšenej podložke )", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 0],
   ["Kľuky", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 0],
   ["Bench press", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 85],
-  ["Multi press", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 55],
-  ["Tlaky s jednoručkami", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 26],
-  ["Mc gill press", "Tlakové cvičenia", "Horizontálny tlak", "unilaterálne", 12],
-  ["Jednoručné kľuky", "Tlakové cvičenia", "Horizontálny tlak", "unilaterálne", 0],
-  ["Landmine viking press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 26],
-  ["Tlaky s jednoručkami", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 26],
-  ["Multi press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 55],
-  ["Militari press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 55],
-  ["Overhead press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 55],
-  ["Tlak s jednoručkou", "Tlakové cvičenia", "Vertikálny tlak", "unilaterálne", 26],
-  ["Single arm landmine press", "Tlakové cvičenia", "Vertikálny tlak", "unilaterálne", 26],
-  ["Tlak s KB", "Tlakové cvičenia", "Vertikálny tlak", "unilaterálne", 26],
+  ["Horizontálny tlak na multi presse", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 55],
+  ["Horizontálny tlak s jednoručkami", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 26],
+  ["Incline bench press", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 70],
+  ["Decline bench press", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 80],
+  ["Chest press machine", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 55],
+  ["Double Bottoms-up kettlebell press", "Tlakové cvičenia", "Horizontálny tlak", "bilaterálne", 16],
+  ["McGill press", "Tlakové cvičenia", "Horizontálny tlak", "unilaterálne", 12],
+  ["Kľuky UL", "Tlakové cvičenia", "Horizontálny tlak", "unilaterálne", 0],
+  ["Chest press machine UL", "Tlakové cvičenia", "Horizontálny tlak", "unilaterálne", 30],
+  ["Bottoms-up kettlebell press UL", "Tlakové cvičenia", "Horizontálny tlak", "unilaterálne", 12],
+  ["Landmine Viking press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 26],
+  ["Vertikálny tlak s jednoručkami", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 26],
+  ["Vertikálny tlak na multi presse", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 55],
+  ["Military press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 55],
+  ["Push press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 60],
+  ["Seated shoulder press machine", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 45],
+  ["Arnold press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 20],
+  ["Double Bottoms-up kettlebell press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 16],
+  ["Behind-the- neck press", "Tlakové cvičenia", "Vertikálny tlak", "bilaterálne", 40],
   ["TRX", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 0],
   ["Horizontálny príťah na kladke", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 45],
   ["Horizontálny príťah s jednoručkami", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 45],
   ["Bent over row", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 70],
   ["Pendlay row", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 70],
-  ["Chest supported row", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 70],
-  ["TRX", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 0],
-  ["Horizontálny príťah na kladke", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 45],
-  ["Horizontálny príťah na kladke s mobilizáciou hrudnej časti chrbtice", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 45],
-  ["Horizontálny príťah s jednoručkou", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 45],
-  ["Negatívne zhyby", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 0],
-  ["Zhyby", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 0],
-  ["Zhyby za pomoci expanderu", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 0],
+  ["Chest-supported row", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 70],
+  ["T-bar row", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 60],
+  ["Horizontálny príťah v transverzálnej rovine", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 45],
+  ["Horizontálny príťah v sagitálnej rovine", "Ťahové cvičenia", "Horizontálny ťah", "bilaterálne", 45],
+  ["TRX UL", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 0],
+  ["Horizontálny príťah na kladke UL", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 45],
+  ["Single-arm dumbell row", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 45],
+  ["Meadows row", "Ťahové cvičenia", "Horizontálny ťah", "unilaterálne", 30],
+  ["Excentrické zhyby", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 0],
+  ["Pull-up", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 0],
+  ["Asistované zhyby", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 0],
   ["Vertikálny príťah na kladke", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 45],
-  ["Vertikálny príťah na kladke", "Ťahové cvičenia", "Vertikálny ťah", "unilaterálne", 45],
+  ["Chin-up", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 0],
+  ["Vertikálny príťah vo frontálnej rovine", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 45],
+  ["Vertikálny príťah v sagitálnej rovine", "Ťahové cvičenia", "Vertikálny ťah", "bilaterálne", 45],
+  ["Vertikálny príťah na kladke UL", "Ťahové cvičenia", "Vertikálny ťah", "unilaterálne", 45],
+  ["Archer pull-up", "Ťahové cvičenia", "Vertikálny ťah", "unilaterálne", 0],
   ["Decelerácia", "Plyometrické / balistické cvičenia", "", "bilaterálne", 0],
   ["Skoky na box dopredu", "Plyometrické / balistické cvičenia", "", "bilaterálne", 0],
   ["Skoky do diaľky", "Plyometrické / balistické cvičenia", "", "bilaterálne", 0],
@@ -748,6 +789,10 @@ const LIB_RAW = [
   ["Veslo", "Doplnkové cvičenia", "Trenažére", "", 0],
   ["Pás", "Doplnkové cvičenia", "Trenažére", "", 0],
   ["Stacionárny bicykel", "Doplnkové cvičenia", "Trenažére", "", 0],
+  ["Overhead press UL", "Tlakové cvičenia", "Vertikálny tlak", "unilaterálne", 20],
+  ["Push press UL", "Tlakové cvičenia", "Vertikálny tlak", "unilaterálne", 24],
+  ["Landmine vertikálny tlak UL", "Tlakové cvičenia", "Vertikálny tlak", "unilaterálne", 26],
+  ["Bottoms-up kettlebell press UL", "Tlakové cvičenia", "Vertikálny tlak", "unilaterálne", 12],
 ];
 function baseLib() {
   return LIB_RAW.map((r, i) => ({ id: 'x' + (i + 1), name: r[0], cat: r[1], sub: r[2],
@@ -765,6 +810,52 @@ function exGroup(e) {
   return g;
 }
 
+/* ============================================================
+   Rozcvička (0.1.5) — samostatná databáza vedľa zásobníka cvikov.
+   Tréner ňou prechádza po fázach v tomto poradí; Potenciácia ju uzatvára
+   a prechádza sa do hlavného tréningového bloku.
+   Názvy sú zámerne presne také, ako ich zadal klient — nenormalizovať.
+   ============================================================ */
+const WU_PHASES = [
+  { id: 'zahriatie', name: 'Zahriatie',
+    optOut: 'Klient sa už zahrial cestou na tréning',
+    groups: [
+      { name: 'Trenažéry', items: ["Pás", "Bike", "Air Bike", "Veslovací trenažér", "SkiErg", "Elliptical", "Stairmaster"] },
+      { name: 'Bez náčinia', items: ["Ľahký beh", "Bežecká abeceda", "Jumping Jacks", "Švihadlo", "Low-impact jumping jacks", "Skipping"] }
+    ] },
+  { id: 'myo', name: 'Myofasciálne uvoľnenie', optional: true, gate: true,
+    tools: ["Foam roller", "Masážna loptička", "Masážna tyč"],
+    areas: ["Chodidlá", "Lýtka", "Tractus iliotibialis", "Hamstringy", "Quadriceps", "Adduktory",
+      "Gluteus", "Piriformis", "Chrbát", "Latissimus dorsi", "Trapézy", "Prsné svaly", "Rameno"] },
+  { id: 'dych', name: 'Dýchanie / kontrola trupu', optional: true,
+    groups: [ { name: '', items: ["Krokodílie dýchanie", "90/90 dýchanie", "Dýchanie s pásom okolo rebier", "360° dýchanie", "Diaphragmatic breathing"] } ] },
+  { id: 'mobilita', name: 'Mobilita',
+    groups: [
+      { name: 'Chrbtica / trup', items: ["Cat-Cow", "Quadruped Rock Back", "Thoracic Rotation", "Open Book", "Thread the Needle", "Thoracic Extension cez foam roller", "Quadruped Thoracic Rotation", "Windmill", "Brettzel"] },
+      { name: 'Ramená / lopatky', items: ["Shoulder CARs", "Scapular Push-Up", "Wall Slides", "Wall Angels", "Pull-Aparts", "Sleeper Stretch"] },
+      { name: 'Bedrá', items: ["90/90", "Hip CARs", "Pigeon Pose", "Couch Stretch", "Frog Stretch", "Hip Flexor Lunge Stretch", "Adductor Rock Back"] },
+      { name: 'Hamstringy', items: ["Straight Leg Raise", "Dynamic Hamstring Sweep", "Leg Swings"] },
+      { name: 'Členky', items: ["Ankle CARs", "Ankle Dorsiflexion", "Knee-to-Wall", "Dynamic Calf Stretch"] }
+    ] },
+  { id: 'aktivacia', name: 'Aktivácia / stabilita',
+    groups: [
+      { name: 'Core / trup', items: ["Dead Bug", "Bird Dog", "Bear Hold", "Bear Crawl", "Plank", "Side Plank", "Quadruped Rock Back"] },
+      { name: 'Gluteus / bedrá', items: ["Glute Bridge", "Single-Leg Glute Bridge", "Clamshell", "Mini-band Lateral Walk", "Monster Walk"] },
+      { name: 'Lopatky / ramená', items: ["Scapular Push-Up", "Wall Slide", "Band Pull-Apart", "Serratus Wall Slide"] }
+    ] },
+  { id: 'dynamicka', name: 'Dynamická / pohybová príprava',
+    groups: [ { name: '', items: ["Inchworm", "Spiderman Lunge + Rotation", "World's Greatest Stretch", "Push-Up Walkout", "Deep Squat", "Crab Walk", "Bear Walk", "Plavec", "Lateral Lunge", "Walking Lunge", "Reverse Lunge + Rotation", "Cossack Squat", "A-Skip", "B-Skip", "Carioca", "Bežecká abeceda"] } ] },
+  { id: 'potenciacia', name: 'Potenciácia',
+    groups: [
+      { name: 'Skoky — Bilaterálne', items: ["CMJ", "Squat Jump", "Pogo Jump", "Ankle Hop", "Broad Jump", "Hurdle Jump", "Box Jump", "Ressisted Jump", "Assisted Jump"] },
+      { name: 'Skoky — Unilaterálne', items: ["Single-Leg CMJ", "Single-Leg Pogo", "Single-Leg Ankle Hop", "Bounds", "Skater Jump", "Single-Leg Resisted Jump", "Single-Leg Assisted Jump"] },
+      { name: 'Medicinbal — Bilaterálne', items: ["Medicine Ball Chest Pass", "Medicine Ball Overhead Throw", "Medicine Ball Scoop Toss", "Medicine Ball Rotational Throw", "Medicine Ball Slam"] },
+      { name: 'Medicinbal — Unilaterálne', items: ["Single-Arm Chest Pass", "Single-Arm Shot Put", "Single-Arm Rotational Throw", "Single-Arm Scoop Toss"] },
+      { name: 'Explozívne', items: ["Explozívny kľuk", "Plyometrický kľuk", "Explozívny výstup", "Jump Squat", "Kettlebell Swing", "Trap Bar Jump", "Olympic Lift Derivates"] },
+      { name: 'Šprint / akcelerácia', items: ["Short Sprint", "Acceleration", "Sprint Drill", "Light Sled Sprint"] }
+    ] }
+];
+
 /* ---------- seeded rng (stabilná ukážka) ---------- */
 let _s = 20260727;
 function srnd() { _s = (_s * 1664525 + 1013904223) % 4294967296; return _s / 4294967296; }
@@ -777,22 +868,22 @@ function qFor(ex) { const b = (ex && ex.base) || 0; return b >= 60 ? 2.5 : (b >=
 const PLAN_DEF = [
   { id: 'p1', name: 'Silový základ 3×', dpw: 3, days: [
     ['Deň A — Drep', [['Zadný drep',5,5],['Bench press',5,5],['Bent over row',4,8],['Plank',3,45]]],
-    ['Deň B — Tlak', [['Militari press',5,5],['Konvenčný mŕtvy ťah',3,5],['Zhyby',4,8],['Triceps kladka',3,10]]],
-    ['Deň C — Ťah', [['Čelný drep',4,6],['Horizontálny príťah s jednoručkou',4,10],['Tlaky s jednoručkami',4,8],['Biceps s jednoručkami',3,12]]]
+    ['Deň B — Tlak', [['Military press',5,5],['Konvenčný mŕtvy ťah',3,5],['Pull-up',4,8],['Triceps kladka',3,10]]],
+    ['Deň C — Ťah', [['Čelný drep',4,6],['Single-arm dumbell row',4,10],['Horizontálny tlak s jednoručkami',4,8],['Biceps s jednoručkami',3,12]]]
   ]},
   { id: 'p2', name: 'Chudnutie — celé telo', dpw: 3, days: [
-    ['Deň A — Celé telo 1', [['Goblet drep',3,10],['Tlaky s jednoručkami',3,12],['Vertikálny príťah na kladke',3,12],['Farmárska chôdza',3,40],['Plank',3,40]]],
+    ['Deň A — Celé telo 1', [['Goblet squat',3,10],['Horizontálny tlak s jednoručkami',3,12],['Vertikálny príťah na kladke',3,12],['Farmárska chôdza',3,40],['Plank',3,40]]],
     ['Deň B — Celé telo 2', [['Rumúnsky mrtvý ťah',3,10],['Výpady v chôdzi',3,12],['Horizontálny príťah na kladke',3,12],['Upažovanie s jednoručkami',3,15],['Pallof press',3,12]]]
   ]},
   { id: 'p3', name: 'Hypertrofia 4×', dpw: 4, days: [
-    ['Deň A — Tlak', [['Bench press',4,8],['Tlaky s jednoručkami',3,10],['Rozpažky na prsia',3,12],['Triceps kladka',3,12]]],
-    ['Deň B — Ťah', [['Zhyby',4,8],['Bent over row',4,10],['Vertikálny príťah na kladke',3,12],['Biceps kladka',3,12]]],
+    ['Deň A — Tlak', [['Bench press',4,8],['Horizontálny tlak s jednoručkami',3,10],['Rozpažky na prsia',3,12],['Triceps kladka',3,12]]],
+    ['Deň B — Ťah', [['Pull-up',4,8],['Bent over row',4,10],['Vertikálny príťah na kladke',3,12],['Biceps kladka',3,12]]],
     ['Deň C — Nohy', [['Zadný drep',4,8],['Rumúnsky mrtvý ťah',3,10],['Predkopávanie',3,12],['Výpony na lýtka',4,15]]],
-    ['Deň D — Ramená a trup', [['Overhead press',4,10],['Upažovanie s jednoručkami',4,15],['Rear delt flies',3,15],['Flexia trupu',3,12]]]
+    ['Deň D — Ramená a trup', [['Military press',4,10],['Upažovanie s jednoručkami',4,15],['Rear delt flies',3,15],['Flexia trupu',3,12]]]
   ]},
   { id: 'p4', name: 'Kondícia a mobilita', dpw: 2, days: [
-    ['Deň A — Celé telo', [['Mrtvý ťah s KB',4,15],['Výpady na mieste',3,12],['Kľuky',3,12],['Veslo',3,12],['Plank',3,45]]],
-    ['Deň B — Intervaly', [['Airbike',5,60],['RFESS ( bulharský drep )',3,10],['Horizontálny príťah na kladke',3,12],['Pallof press',3,12]]]
+    ['Deň A — Celé telo', [['Mrtvý ťah',4,15],['Výpady na mieste',3,12],['Kľuky',3,12],['Veslo',3,12],['Plank',3,45]]],
+    ['Deň B — Intervaly', [['Airbike',5,60],['Bulharský drep',3,10],['Horizontálny príťah na kladke',3,12],['Pallof press',3,12]]]
   ]}
 ];
 /* Plán patrí jednému klientovi. Zo šablóny vyrobí vlastnú kópiu pre klienta. */
@@ -1025,7 +1116,9 @@ const ui = { tab: 'klienti', stack: [], overlays: [], search: '', weekOff: 0, mo
   planDay: 0, dbSearch: '', cvDay: null,
   /* 0.1.4 fix: náhľad pred zápisom z profilu, rozbalená rezervácia u fixného
      klienta, rozrobená superséria (čaká na druhý cvik) */
-  prep: null, cvAsk: false, ssFill: null };
+  prep: null, cvAsk: false, ssFill: null,
+  /* 0.1.5: záložka v pohľade klienta a rozbehnutá rozcvička */
+  cvTab: 'terminy', wu: null };
 
 function fresh() { return MODE === 'empty' ? buildEmpty() : buildDemo(); }
 function load() {
@@ -1338,7 +1431,7 @@ function closeAllOv() { ui.overlays = []; render(); }
 
 const SCREENS = {
   klienti: scKlienti, kalendar: scKalendar, nastavenia: scNastavenia,
-  client: scClient, plan: scPlan, session: scSession, exdb: scExdb
+  client: scClient, plan: scPlan, session: scSession, exdb: scExdb, warmup: scWarmup
 };
 function render() {
   const sc = grabScroll();
@@ -1433,8 +1526,10 @@ function chartSVG(pts, unit, opts) {
    ============================================================ */
 /* hlavička záložky Klienti — vpravo vstup do databázy cvikov */
 function klientiHdrTop() {
-  return '<div style="display:flex;align-items:center;gap:8px">' +
+  return '<div style="display:flex;align-items:center;gap:4px">' +
     '<h1 style="flex:1">Klienti</h1>' +
+    // 0.1.5 — rozcvička stojí vedľa zásobníka cvikov
+    '<button class="iconbtn muted" data-act="warmup" aria-label="Rozcvička">' + I.flame + '</button>' +
     '<button class="iconbtn muted" data-act="exDb" aria-label="Databáza cvikov">' + I.plan + '</button>' +
     '</div>';
 }
@@ -2091,11 +2186,8 @@ function scPlan(id) {
       '<button class="swact danger" data-act="delItem" data-pid="' + p.id + '" data-did="' + d.id + '" data-idx="' + ii + '" aria-label="Odstrániť cvik">' + I.trash + '</button>' +
       '</div>' +
       '<div class="row tap swbody" role="button" tabindex="0" data-act="editItem" data-pid="' + p.id + '" data-did="' + d.id + '" data-idx="' + ii + '">' +
-      '<div class="grow"><div style="display:flex;align-items:center;gap:10px">' +
-      '<div class="nm" style="min-width:0">' + esc(ex ? ex.name : 'Cvik') + '</div>' +
-      // 0.1.4 fix — +R pridá rozcvičovaciu sériu a otvorí úpravu, nech sa dá hneď vyplniť
-      '<button class="minibtn" data-act="addWarm" data-pid="' + p.id + '" data-did="' + d.id + '" data-idx="' + ii + '" ' +
-      'aria-label="Pridať rozcvičovaciu sériu">+R</button></div>' +
+      // 0.1.5 — +R je už len v úprave cviku, riadok ostáva čistý
+      '<div class="grow"><div class="nm">' + esc(ex ? ex.name : 'Cvik') + '</div>' +
       '<div class="mt">' + esc(itemLine(it)) + '</div></div>' +
       '<span class="iconbtn muted grip" data-act="noop" data-drag="' + ii + '" aria-label="Presunúť cvik">' + I.grip + '</span>' +
       '</div></div>';
@@ -2112,11 +2204,15 @@ function scPlan(id) {
       if ((it.ss || null) !== open) {
         if (open) h += '</div>';
         open = it.ss || null;
-        // 0.1.4 fix — pridávanie do supersérie je malé + pri jej názve
-        if (open) h += '<div class="ssgrp"><div class="sshd">' +
+        /* 0.1.4 fix — pridávanie do supersérie je malé + pri jej názve
+           0.1.5 — hlavičku sa dá potiahnuť doľava a supersériu zrušiť */
+        if (open) h += '<div class="ssgrp"><div class="sw sshdsw">' +
+          '<div class="swacts"><button class="swact danger" data-act="delSs" data-pid="' + p.id + '" data-did="' + d.id +
+          '" data-id="' + open + '" aria-label="Odstrániť supersériu">' + I.trash + '</button></div>' +
+          '<div class="sshd swbody">' +
           '<span class="nmx">' + esc(ssName(p.id, d.id, open) || 'Superséria') + '</span>' +
           '<button class="minibtn" data-act="pickEx" data-pid="' + p.id + '" data-did="' + d.id + '" data-ss="' + open + '" ' +
-          'aria-label="Pridať cvik do supersérie">' + I.plus + '</button></div>';
+          'aria-label="Pridať cvik do supersérie">' + I.plus + '</button></div></div>';
       }
       h += itemRow(d, it, ii);
     });
@@ -2158,13 +2254,13 @@ function scNastavenia() {
     '<div class="chev">' + I.chev + '</div></button></div></div></div>';
 
   h += '<div class="sec">' + secH('Verzia') + '<div class="pad">' +
-    '<div class="card"><div style="font-weight:700">0.1.4 · ukážkové dáta</div>' +
+    '<div class="card"><div style="font-weight:700">0.1.5 · ukážkové dáta</div>' +
     '<div class="hint" style="margin-top:4px">Prázdna a predplnená verzia sú samostatné súbory.</div></div>' +
     '<div style="margin-top:14px"><button class="btn quiet" data-act="reset">Obnoviť pôvodný stav</button></div>' +
     '<div class="hint" style="margin-top:8px">Zmeny sa držia iba počas relácie prehliadača.</div>' +
     '</div></div>';
 
-  h += '<div class="sec"><div class="pad"><div class="hint" style="text-align:center">Coach v0.1.4 · ukážkové dáta<br>Bez servera, bez účtu, bez internetu.</div></div></div>';
+  h += '<div class="sec"><div class="pad"><div class="hint" style="text-align:center">Coach v0.1.5 · ukážkové dáta<br>Bez servera, bez účtu, bez internetu.</div></div></div>';
   h += '<div style="height:20px"></div></div>';
   return h;
 }
@@ -2438,7 +2534,9 @@ function ovPickEx(o) {
     });
     return order.map(part => {
       const e0 = groups[part][0];
-      const lbl = short ? [e0.sub, e0.variant].filter(Boolean).join(' · ') : part;
+      // short: 1 = bez kategórie, 2 = len variant (kategória aj podskupina sú nad blokom)
+      const lbl = short === 2 ? (e0.variant || '')
+        : (short ? [e0.sub, e0.variant].filter(Boolean).join(' · ') : part);
       return (lbl ? '<div class="label" style="margin:16px 0 8px">' + esc(lbl) + '</div>' : '<div style="height:10px"></div>') +
         '<div class="list">' +
         groups[part].map(e => '<button class="row" data-act="addEx" data-id="' + e.id + '">' +
@@ -2446,23 +2544,27 @@ function ovPickEx(o) {
           '<div class="chev">' + I.plus + '</div></button>').join('') + '</div>';
     }).join('');
   }
-  /* 0.1.4 fix — pri výmene cviku sa najprv ponúkne rovnaká kategória,
-     zvyšok databázy je zbalený za šípkou */
-  let focusCat = null;
+  /* 0.1.4 fix — pri výmene cviku sa najprv ponúkne blízka skupina, zvyšok
+     databázy je zbalený za šípkou.
+     0.1.5 — zúžené z kategórie na podskupinu (napr. Kolenný ohyb — quadriceps);
+     cviky bez podskupiny (plyometria, olympijské) sa zúžia aspoň na kategóriu. */
+  let focus = null;
   if (o.replaceIdx != null && !q) {
     const pp = plan(o.pid);
     const dd = pp && pp.days.find(x => x.id === o.did);
     const itc = dd && dd.items[o.replaceIdx];
     const exc = itc && exOf(itc.exId);
-    if (exc) focusCat = exc.cat;
+    if (exc) focus = { cat: exc.cat, sub: exc.sub || '' };
   }
   let body;
-  if (focusCat) {
-    const same = list.filter(e => e.cat === focusCat);
-    const rest = list.filter(e => e.cat !== focusCat);
-    body = '<div class="dbcat" style="padding:0;margin:14px 0 0">' + esc(focusCat) + '</div>' +
-      (same.length ? renderGroups(same, true)
-        : '<div class="hint" style="padding:12px 0">V tejto kategórii nie je iný cvik.</div>') +
+  if (focus) {
+    const inFocus = e => e.cat === focus.cat && (focus.sub ? e.sub === focus.sub : !e.sub);
+    const same = list.filter(inFocus);
+    const rest = list.filter(e => !inFocus(e));
+    body = '<div class="dbcat" style="padding:0;margin:14px 0 0">' + esc(focus.sub || focus.cat) + '</div>' +
+      (focus.sub ? '<div class="hint" style="margin-top:2px">' + esc(focus.cat) + '</div>' : '') +
+      (same.length ? renderGroups(same, 2)
+        : '<div class="hint" style="padding:12px 0">V tejto podskupine nie je iný cvik.</div>') +
       '<div style="height:18px"></div>' +
       '<button class="row" data-act="pickExAll" style="background:var(--surface);border-radius:var(--r)">' +
       '<div class="grow"><div class="nm" style="font-weight:600">' +
@@ -2522,7 +2624,8 @@ function ovEditItem(o) {
           '" data-wi="' + wi + '" aria-label="Odstrániť rozcvičovaciu sériu">' + I.trash + '</button>' +
           '</div>').join('')
       : '') +
-    '<button class="btn quiet sm" data-act="addWarm" data-pid="' + p.id + '" data-did="' + d.id + '" data-idx="' + o.idx + '" ' +
+    // 0.1.5 — rovnaký štýl ako pridanie bežnej série
+    '<button class="addset" data-act="addWarm" data-pid="' + p.id + '" data-did="' + d.id + '" data-idx="' + o.idx + '" ' +
     'data-stay="1">' + I.plus + 'Pridať rozcvičovaciu sériu</button>' +
     '<div style="height:16px"></div>' +
     '<button class="btn primary" data-act="saveItem" data-pid="' + p.id + '" data-did="' + d.id + '" data-idx="' + o.idx + '">Uložiť</button>' +
@@ -2663,7 +2766,12 @@ function ovLog() {
        ani do počtu sérií nevstupujú */
     const wl = e.warm || [];
     if (wl.length) {
-      h += '<div class="warmblk"><div class="warmlbl">Rozcvičovacie série</div>' +
+      /* 0.1.5 — polia pre opakovania a váhu sú skryté, blok sa rozbalí ťuknutím */
+      h += '<div class="warmblk">' +
+        '<button class="warmtog" data-act="logWarmToggle" data-ei="' + ei + '">' +
+        '<span class="warmlbl">Rozcvičovacie série · ' + esc(nf(wl.length)) + '</span>' +
+        '<span class="chev expand' + (e.warmOpen ? ' on' : '') + '">' + I.cdown + '</span></button>' +
+        (!e.warmOpen ? '' :
         '<div class="warmhd"><div></div><div>opak.</div><div>kg</div><div></div></div>' +
         wl.map((w, wi) => '<div class="warmrow">' +
           '<div class="n">' + nf(wi + 1) + '</div>' +
@@ -2674,7 +2782,7 @@ function ovLog() {
           '<span class="u">kg</span></div>' +
           '<button class="del" data-act="logDelWarm" data-ei="' + ei + '" data-wi="' + wi + '" ' +
           'aria-label="Odstrániť rozcvičovaciu sériu">' + I.trash + '</button>' +
-          '</div>').join('') +
+          '</div>').join('')) +
         '</div>';
     }
     if (e.open) {
@@ -2765,6 +2873,32 @@ function ovClientView(o) {
       '<div class="lbl" style="margin-top:2px">' + esc(plural(streakWeeks(c.id), 'týždeň v rade', 'týždne v rade', 'týždňov v rade')) + '</div></div>';
   }
 
+  /* 0.1.5 — pohľad klienta je rozdelený na tri záložky */
+  const CVT = [{ id: 'terminy', t: 'Termíny' }, { id: 'pokrok', t: 'Pokrok' }, { id: 'nastavenia', t: 'Nastavenia' }];
+  if (!CVT.some(x => x.id === ui.cvTab)) ui.cvTab = 'terminy';
+  h += '<div class="sec"><div class="pad"><div class="seg">' +
+    CVT.map(x => '<button data-act="cvTab" data-id="' + x.id + '" class="' + (ui.cvTab === x.id ? 'on' : '') + '">' +
+      esc(x.t) + '</button>').join('') + '</div></div></div>';
+
+  if (ui.cvTab === 'pokrok') {
+    h += ctabPokrok(c, ss);
+    h += weightBlock(c);
+    h += '<div style="height:28px"></div></div></div></div>';
+    return h;
+  }
+  if (ui.cvTab === 'nastavenia') {
+    h += '<div class="sec">' + secH('O tréningu') + '<div class="pad"><div class="list">' +
+      infoRow('Tréner', S.coach.name) +
+      (p ? infoRow('Plán', p.name) : '') +
+      infoRow('Platba', payLine(c)) +
+      (isPrepaid(c) ? infoRow('Zostáva', leftLabel(c) + ' tréningov') : '') +
+      '</div></div></div>';
+    h += '<div class="sec" style="margin-top:28px"><div class="pad">' +
+      '<button class="btn quiet" data-act="closeOv">Ukončiť ukážku pohľadu klienta</button></div></div>';
+    h += '<div style="height:28px"></div></div></div></div>';
+    return h;
+  }
+
   /* 0.1.4 — tento týždeň sa ukazuje deň v týždni a čas tréningu,
      nie názov dňa z plánu (Deň A) */
   const wsY = ymd(ws);
@@ -2793,14 +2927,6 @@ function ovClientView(o) {
   // 0.1.3 — voľné termíny a žiadosť o rezerváciu (kozmetické)
   h += cvBooking(c);
 
-  // 0.1.3 — pokrok presne ako v trénerskom pohľade
-  h += '<div class="sec"><div class="lbl">Tvoj pokrok</div></div>';
-  h += ctabPokrok(c, ss);
-  // 0.1.4 — váha je v profile vlastná záložka, v pohľade klienta zostáva pod pokrokom
-  h += weightBlock(c);
-
-  h += '<div class="sec" style="margin-top:40px"><div class="pad">' +
-    '<button class="btn quiet" data-act="closeOv">Ukončiť ukážku pohľadu klienta</button></div></div>';
   h += '<div style="height:28px"></div></div></div></div>';
   return h;
 }
@@ -2826,6 +2952,12 @@ function cvUpcoming(c) {
       esc(DOWL[parseD(s.date).getDay()]) + (s.time ? ' · ' + esc(s.time) : '') + '</div>' +
       '<div class="hint">' + esc(fmtD(s.date)) + '</div></div></div>').join('') + '</div>';
   }
+  /* 0.1.5 — fixný klient si termín nepýta, ale nahrádza: tlačidlo je tu,
+     v prehľade budúceho týždňa, a rozbalí voľné hodiny trénera */
+  if (!op && !ui.cvAsk) {
+    h += '<div style="height:12px"></div>' +
+      '<button class="btn quiet" data-act="cvAsk">' + I.cal + 'Nahradiť termín</button>';
+  }
   return h + '</div></div>';
 }
 /* Voľné termíny: 14 dní dopredu, len hodiny, ktoré nie sú obsadené.
@@ -2839,18 +2971,14 @@ function cvBooking(c) {
     const free = freeSlots(ds);
     if (free.length) days.push({ ds: ds, d: d, free: free });
   }
-  let h = '<div class="sec"><div class="lbl">Voľné termíny</div><div class="pad" style="margin-top:10px">';
+  /* 0.1.5 — bez nadpisu „Voľné termíny“ a bez textu pod tlačidlom;
+     fixnému klientovi sa hodiny ukážu až po ťuknutí na Nahradiť termín
+     (tlačidlo je v prehľade budúceho týždňa), operatívny ich má stále. */
+  if (c.typ === 'fixny' && !ui.cvAsk) return '';
+  let h = '<div class="sec"><div class="pad" style="margin-top:10px">';
   if (!days.length) {
     h += '<div class="card hint" style="text-align:center;padding:22px">Momentálne nie sú voľné termíny.</div></div></div>';
     return h;
-  }
-  /* 0.1.4 fix — fixný klient má pevné dni, voľné hodiny ho nezaujímajú stále;
-     najprv vidí len tlačidlo a rozbalí si ich, keď o termín naozaj žiada.
-     Operatívny klient ich má otvorené ako doteraz. */
-  if (c.typ === 'fixny' && !ui.cvAsk) {
-    h += '<button class="btn quiet" data-act="cvAsk">' + I.cal + 'Požiadať o termín</button>' +
-      '<div class="hint" style="text-align:center;margin-top:10px">Ukáže voľné hodiny trénera na najbližšie dni.</div>';
-    return h + '</div></div>';
   }
   const sel = days.find(x => x.ds === ui.cvDay) || days[0];
   // pás dní
@@ -2889,6 +3017,116 @@ function ssName(planId, dayId, ssId) {
   const d = p.days.find(x => x.id === dayId); if (!d) return null;
   const g = ssGroups(p, d).find(x => x.id === ssId);
   return g ? g.name : null;
+}
+
+/* ============================================================
+   Rozcvička — sprievodca fázami (0.1.5)
+   ============================================================ */
+function wuFresh() { return { phase: 0, sel: {}, skipWarm: false, myo: null, skipped: {} }; }
+function wuKey(pid, kind, name) { return pid + '|' + kind + '|' + name; }
+function wuOn(pid, kind, name) { return !!ui.wu.sel[wuKey(pid, kind, name)]; }
+function wuPicked(pid, kind) {
+  const pre = pid + '|' + kind + '|';
+  return Object.keys(ui.wu.sel).filter(k => ui.wu.sel[k] && k.indexOf(pre) === 0).map(k => k.slice(pre.length));
+}
+function wuRow(pid, kind, name) {
+  const on = wuOn(pid, kind, name);
+  return '<button class="row" data-act="wuPick" data-pid="' + pid + '" data-kind="' + kind + '" data-nm="' + esc(name) + '">' +
+    '<div class="pick' + (on ? ' on' : '') + '">' + (on ? I.check : '') + '</div>' +
+    '<div class="grow"><div class="nm" style="font-weight:500">' + esc(name) + '</div></div></button>';
+}
+function wuList(pid, kind, items) {
+  return '<div class="pad"><div class="list">' + items.map(n => wuRow(pid, kind, n)).join('') + '</div></div>';
+}
+function wuDots(i, n) {
+  let h = '<div style="display:flex;gap:5px;justify-content:center;margin:14px 0 4px">';
+  for (let k = 0; k < n; k++) {
+    h += '<span style="width:' + (k === i ? '20px' : '6px') + ';height:6px;border-radius:3px;background:' +
+      (k === i ? 'var(--text)' : (k < i ? '#4a4a52' : 'var(--line)')) + '"></span>';
+  }
+  return h + '</div>';
+}
+function scWarmup() {
+  const w = ui.wu, total = WU_PHASES.length;
+  if (w.phase >= total) return wuSummary();
+  const ph = WU_PHASES[w.phase];
+  let h = navbar('Rozcvička', { backAct: 'wuBack',
+    right: '<div class="iconbtn ghost" style="pointer-events:none">' + esc(nf(w.phase + 1) + '/' + nf(total)) + '</div>' });
+  h += '<div class="body pb-act" data-scroll="wu-' + ph.id + '">';
+  h += wuDots(w.phase, total);
+  h += '<div class="pad" style="margin-top:8px">' +
+    '<div style="font-size:23px;font-weight:700;letter-spacing:-.02em">' + esc(ph.name) + '</div>' +
+    (ph.optional ? '<div class="hint" style="margin-top:2px">Nepovinná fáza — dá sa preskočiť.</div>' : '') +
+    '</div>';
+
+  if (ph.id === 'zahriatie') {
+    // voľba na úrovni fázy — nie je to cvik, uspokojí celú fázu
+    h += '<div class="sec" style="margin-top:16px"><div class="pad"><div class="list">' +
+      '<button class="row" data-act="wuSkipWarm">' +
+      '<div class="pick' + (w.skipWarm ? ' on' : '') + '">' + (w.skipWarm ? I.check : '') + '</div>' +
+      '<div class="grow"><div class="nm" style="font-weight:500">' + esc(ph.optOut) + '</div></div></button>' +
+      '</div></div></div>';
+    if (!w.skipWarm) h += wuGroups(ph);
+  } else if (ph.id === 'myo') {
+    h += '<div class="sec" style="margin-top:16px"><div class="pad"><div class="seg">' +
+      '<button data-act="wuMyo" data-id="ano" class="' + (w.myo === 'ano' ? 'on' : '') + '">Áno</button>' +
+      '<button data-act="wuMyo" data-id="nie" class="' + (w.myo === 'nie' ? 'on' : '') + '">Nie</button>' +
+      '</div></div></div>';
+    if (w.myo === 'ano') {
+      h += '<div class="sec">' + secH('Pomôcka') + wuList(ph.id, 'tool', ph.tools);
+      h += '</div>';
+      // oblasti sa ukážu až po výbere aspoň jednej pomôcky
+      if (wuPicked(ph.id, 'tool').length) {
+        h += '<div class="sec">' + secH('Oblasť') + wuList(ph.id, 'area', ph.areas) + '</div>';
+      }
+    } else if (w.myo === 'nie') {
+      h += '<div class="pad" style="margin-top:16px"><div class="card hint" style="text-align:center;padding:22px">' +
+        'Fáza sa preskočí.</div></div>';
+    }
+  } else {
+    h += wuGroups(ph);
+  }
+
+  h += '<div style="height:20px"></div></div>';
+  const lastPh = w.phase === total - 1;
+  h += '<div class="actionbar">' +
+    (ph.optional ? '<button class="btn quiet" data-act="wuSkip" style="margin-bottom:10px">Preskočiť fázu</button>' : '') +
+    '<button class="btn primary" data-act="wuNext">' + (lastPh ? 'Dokončiť rozcvičku' : 'Ďalej') + '</button>' +
+    '</div>';
+  return h;
+}
+function wuGroups(ph) {
+  return (ph.groups || []).map(g =>
+    '<div class="sec">' + (g.name ? secH(g.name) : '') + wuList(ph.id, 'ex', g.items) + '</div>').join('');
+}
+/* zhrnutie na konci — čo je vybrané v jednotlivých fázach */
+function wuSummary() {
+  const w = ui.wu;
+  let h = navbar('Rozcvička', { backAct: 'wuBack' });
+  h += '<div class="body pb-act" data-scroll="wu-sum">';
+  h += '<div class="pad" style="padding-top:18px">' +
+    '<div style="font-size:23px;font-weight:700;letter-spacing:-.02em">Rozcvička je hotová</div>' +
+    '<div class="hint" style="margin-top:4px">Prehľad toho, čo si vybral. Ide sa do hlavného bloku.</div></div>';
+  WU_PHASES.forEach(ph => {
+    let val;
+    if (ph.id === 'zahriatie' && w.skipWarm) val = ['Klient sa už zahrial cestou na tréning'];
+    else if (ph.id === 'myo' && w.myo === 'nie') val = null;
+    else if (ph.id === 'myo') {
+      const t = wuPicked(ph.id, 'tool'), a = wuPicked(ph.id, 'area');
+      val = t.length ? [t.join(', ') + (a.length ? ' · ' + a.join(', ') : '')] : null;
+    } else val = wuPicked(ph.id, 'ex');
+    if (w.skipped[ph.id]) val = null;
+    h += '<div class="sec">' + secH(ph.name) + '<div class="pad">' +
+      (val && val.length
+        ? '<div class="card" style="font-size:15px;line-height:1.6">' + esc(val.join(' · ')) + '</div>'
+        : '<div class="card hint" style="padding:14px">Preskočené</div>') +
+      '</div></div>';
+  });
+  h += '<div style="height:20px"></div></div>';
+  h += '<div class="actionbar">' +
+    '<button class="btn quiet" data-act="wuRestart" style="margin-bottom:10px">Začať odznova</button>' +
+    '<button class="btn primary" data-act="back">Zavrieť</button></div>';
+  return h;
 }
 
 /* ============================================================
@@ -3377,6 +3615,18 @@ const ACT = {
     const p = plan(t.dataset.pid); const d = p && p.days.find(x => x.id === t.dataset.did); if (!d) return;
     d.items.splice(Number(t.dataset.idx), 1); save(); closeOv();
   },
+  /* 0.1.5 — zrušenie supersérie: cviky zostanú v dni, zmizne len zoskupenie */
+  delSs: (t) => {
+    const p = plan(t.dataset.pid); const d = p && p.days.find(x => x.id === t.dataset.did); if (!d) return;
+    const ssId = t.dataset.id;
+    const g = (d.ssg || []).find(x => x.id === ssId);
+    askConfirm('Odstrániť supersériu?', (g ? g.name + ' — ' : '') +
+      'zruší sa len zoskupenie, cviky zostanú v dni.', 'Odstrániť', () => {
+      d.items.forEach(x => { if (x.ss === ssId) x.ss = null; });
+      d.ssg = (d.ssg || []).filter(x => x.id !== ssId);
+      save(); render(); toast('Superséria odstránená');
+    }, true);
+  },
   /* 0.1.4 fix — rozcvičovacie série. Z riadku plánu pridá jednu a otvorí úpravu,
      v úprave (data-stay) pridá ďalšiu a sheet nechá otvorený. */
   addWarm: (t) => {
@@ -3485,9 +3735,14 @@ const ACT = {
     }, true);
   },
 
-  clientView: (t) => { ui.overlays = []; ui.cvAsk = false; ui.cvDay = null; openOv({ t: 'clientView', id: t.dataset.id }); },
-  /* 0.1.4 fix — fixný klient si voľné hodiny rozbalí až žiadosťou o termín */
+  clientView: (t) => {
+    ui.overlays = []; ui.cvAsk = false; ui.cvDay = null; ui.cvTab = 'terminy';
+    openOv({ t: 'clientView', id: t.dataset.id });
+  },
+  /* 0.1.4 fix — fixný klient si voľné hodiny rozbalí až žiadosťou o termín
+     0.1.5 — u fixného klienta je to „Nahradiť termín“ v prehľade budúceho týždňa */
   cvAsk: () => { ui.cvAsk = true; render(); },
+  cvTab: (t) => { ui.cvTab = t.dataset.id; render(); },
   code: () => openOv({ t: 'code' }),
   submitCode: () => {
     const v = ($('#f-code').value || '').trim();
@@ -3495,7 +3750,7 @@ const ACT = {
     o.val = v;
     if (v.length !== 6) { o.err = 'Kód má presne 6 znakov.'; render(); return; }
     if (!S.clients.length) { o.err = 'Tomuto kódu zatiaľ nepatrí žiadny klient.'; render(); return; }
-    ui.overlays = []; ui.cvAsk = false; ui.cvDay = null;
+    ui.overlays = []; ui.cvAsk = false; ui.cvDay = null; ui.cvTab = 'terminy';
     openOv({ t: 'clientView', id: S.clients[0].id });
   },
   reset: () => askConfirm('Obnoviť pôvodný stav?', 'Všetky zmeny v tejto ukážke sa zahodia.', 'Obnoviť', () => {
@@ -3561,6 +3816,11 @@ const ACT = {
     const e = ui.draft && ui.draft.exs[Number(t.dataset.ei)]; if (!e || !e.warm) return;
     e.warm.splice(Number(t.dataset.wi), 1);
     render();
+  },
+  /* 0.1.5 — polia rozcvičenia sú skryté, kým sa blok nerozbalí */
+  logWarmToggle: (t) => {
+    const e = ui.draft && ui.draft.exs[Number(t.dataset.ei)]; if (!e) return;
+    e.warmOpen = !e.warmOpen; render();
   },
   rowStep: (t) => {
     const e = ui.draft && ui.draft.exs[Number(t.dataset.ei)]; if (!e || !e.rows) return;
@@ -3779,6 +4039,29 @@ const ACT = {
     toast('Žiadosť o termín ' + fmtD(t.dataset.date) + ' ' + t.dataset.time + ' odoslaná');
   }
 ,
+
+  /* ---------- 0.1.5: rozcvička ---------- */
+  warmup: () => { ui.overlays = []; ui.wu = wuFresh(); push('warmup'); },
+  wuPick: (t) => {
+    const k = wuKey(t.dataset.pid, t.dataset.kind, t.dataset.nm);
+    if (ui.wu.sel[k]) delete ui.wu.sel[k]; else ui.wu.sel[k] = true;
+    render();
+  },
+  wuSkipWarm: () => { ui.wu.skipWarm = !ui.wu.skipWarm; render(); },
+  wuMyo: (t) => { ui.wu.myo = t.dataset.id; render(); },
+  wuNext: () => {
+    const ph = WU_PHASES[ui.wu.phase];
+    if (ph && ph.id === 'myo' && ui.wu.myo === 'nie') ui.wu.skipped[ph.id] = true;
+    else if (ph) delete ui.wu.skipped[ph.id];
+    ui.wu.phase++; render();
+  },
+  wuSkip: () => {
+    const ph = WU_PHASES[ui.wu.phase];
+    if (ph) ui.wu.skipped[ph.id] = true;
+    ui.wu.phase++; render();
+  },
+  wuBack: () => { if (ui.wu.phase > 0) { ui.wu.phase--; render(); } else pop(); },
+  wuRestart: () => { ui.wu = wuFresh(); render(); },
 
   /* ---------- databáza cvikov ---------- */
   exDb: () => { ui.dbSearch = ''; ui.overlays = []; push('exdb'); },
@@ -4037,7 +4320,8 @@ const HINTS = {
   client: { i: 'users', t: 'Profil klienta', d: 'Záložky: Plán (tréningové plány a zápis tréningu), Pokrok (vývoj cvikov z aktívneho plánu), Váha (ak je pre klienta relevantná) a Info (údaje, dostupnosť, poznámka, prílohy).' },
   plan: { i: 'plan', t: 'Plán', d: 'Plán má dni a v nich cviky so sériami a opakovaniami. Cvik presunieš úchytom vpravo, potiahnutím doľava ho vymeníš alebo odstrániš.' },
   log: { i: 'bolt', t: 'Zápis tréningu', d: 'Zapisuje sa po cvikoch: počet sérií a najlepší výkon. Šípkou nadol cvik rozpíšeš na jednotlivé série, potiahnutím doľava ho odstrániš.' },
-  exdb: { i: 'plan', t: 'Databáza cvikov', d: 'Celá zásoba cvikov podľa pohybových kategórií. Ku každému si môžeš uložiť poznámku a pridať vlastné cviky.' }
+  exdb: { i: 'plan', t: 'Databáza cvikov', d: 'Celá zásoba cvikov podľa pohybových kategórií. Ku každému si môžeš uložiť poznámku a pridať vlastné cviky.' },
+  warmup: { i: 'flame', t: 'Rozcvička', d: 'Sedem fáz od zahriatia po potenciáciu. Prechádzaš ich po poradí, v každej si vyberieš, čo klient robí. Myofasciálne uvoľnenie a dýchanie sa dajú preskočiť.' }
 };
 function hintSeen(k) {
   try { return !!sessionStorage.getItem(SKEY + '.hint.' + k); } catch (e) { return false; }
@@ -4083,6 +4367,7 @@ function hintKey() {
   if (t.v === 'client') return 'client';
   if (t.v === 'plan') return 'plan';
   if (t.v === 'exdb') return 'exdb';
+  if (t.v === 'warmup') return 'warmup';
   if (ui.stack.length) return null;
   return ui.tab;
 }
